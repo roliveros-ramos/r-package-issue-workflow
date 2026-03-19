@@ -1,0 +1,319 @@
+You are reviewing the source code of an R package. The package source is attached to this prompt.
+
+Your task is to identify a ranked set of GitHub issues that are suitable for direct creation in the repository issue tracker.
+
+## Objective
+
+Find only small, local, actionable issues in the R package source, prioritising defects and near-defects that can be verified from code inspection alone.
+
+Focus on code under the `R/` directory unless told otherwise.
+
+## Allowed issue classes
+
+Only report issues in these classes:
+
+- `bug`: likely incorrect behaviour, immediate error, wrong return value, broken control flow, broken argument handling
+- `robustness`: fragile handling of `NULL`, missing files, missing objects, path handling, brittle assumptions, failures before a clear error is emitted
+- `validation`: missing checks on arguments, dimensions, required columns, expected object structure, or output shape
+- `api-consistency`: mismatch between documented or advertised behaviour and implementation, incorrect forwarding of arguments, inconsistent class handling, inconsistent wrapper behaviour
+- `safe-refactor`: small refactors that clearly improve safety or debuggability without materially changing intended behaviour, e.g. replacing `eval(parse())` with a direct call, or replacing `class(x) == "foo"` with `inherits(x, "foo")`
+
+## Excluded issue classes
+
+Do NOT report:
+
+- broad enhancements
+- feature requests
+- style-only comments
+- large refactors
+- performance suggestions without strong evidence
+- documentation-only issues unless they expose a genuine API inconsistency
+- test suggestions by themselves
+- speculative issues that cannot be grounded in the code
+
+## Quality bar
+
+Each reported issue must be:
+
+- local and self-contained
+- tied to a specific file and function or a very local code path
+- described concretely
+- actionable
+- non-duplicative
+- suitable for a standalone GitHub issue
+
+Prefer issues with a clear failure mode, such as:
+
+- immediate error
+- silent mislabelling
+- incorrect return value
+- broken dispatch
+- brittle class checks
+- incorrect handling of missing inputs
+- fragile assumptions that should be validated explicitly
+
+## Ranking and selection
+
+You must first identify the best candidate issues, then sort them by overall relevance before batching them into files.
+
+Sort issues from most relevant to least relevant using this priority order:
+
+1. higher confidence
+2. higher severity
+3. broader user impact within normal package use
+4. clearer and more concrete failure mode
+5. smaller and more local fix
+6. easier reviewer verification from code inspection
+
+If two issues are otherwise similar, prefer the one that is:
+
+- easier to validate quickly
+- less speculative
+- less redundant with another issue
+
+Only include issues with confidence `high` or `medium`.
+Prefer `high`.
+
+## Severity levels
+
+Assign one of:
+
+- `low`: minor issue, unlikely to break common workflows, but worth fixing
+- `medium`: can break some normal workflows or produce misleading behaviour
+- `high`: likely to cause immediate failure, silent wrong behaviour, or serious API breakage
+
+## Confidence levels
+
+Assign one of:
+
+- `high`: strongly supported by direct code inspection
+- `medium`: likely issue, but one implementation detail or interaction remains somewhat uncertain
+- `low`: plausible but not sufficiently certain
+
+Do not include issues with confidence `low`.
+
+## Required issue structure
+
+Each issue must contain these fields:
+
+- `issue_id`
+- `package`
+- `scope`
+- `kind`
+- `severity`
+- `confidence`
+- `title`
+- `body`
+- `files`
+- `function`
+- `labels`
+- `assignees`
+- `milestone`
+
+## JSON schema for each issue
+
+Each issue must follow this schema:
+
+{
+  "issue_id": "PACKAGE-r-YYYY-MM-DD-bBB-III",
+  "package": "PACKAGE",
+  "scope": "R",
+  "kind": "bug | robustness | validation | api-consistency | safe-refactor",
+  "severity": "low | medium | high",
+  "confidence": "medium | high",
+  "title": "short function-oriented title",
+  "body": "issue body text",
+  "files": ["R/file1.R"],
+  "function": "function_name",
+  "labels": ["bug"],
+  "assignees": [],
+  "milestone": ""
+}
+
+## issue_id convention
+
+Use this format:
+
+`{PACKAGE_NAME}-r-{DATE}-b{BATCH_NUMBER_2DIGIT}-{ISSUE_NUMBER_3DIGIT}`
+
+Example:
+
+`gts-r-2026-03-19-b01-001`
+
+Rules:
+
+- issue numbering must start at `001` within each batch
+- numbering increments by one within each batch
+- batch numbers must start at `01`
+- all issues in the same file must share the same package, date, and batch number
+
+## JSON filename convention
+
+Each output file must be a standalone JSON file containing only a JSON array.
+Each JSON file must contain at most 5 issues.
+
+Use this filename pattern:
+
+`{PACKAGE_NAME}_issues_R_{DATE}_b{BATCH_NUMBER_2DIGIT}_n{ISSUE_COUNT_2DIGIT}.json`
+
+Example:
+
+`gts_issues_R_2026-03-19_b01_n05.json`
+
+Rules:
+
+- `PACKAGE_NAME` must be consistent across all files and obtained from package metadata
+- `DATE` must be consistent across all files (today)
+- `nXX` must equal the number of issues actually present in that file
+- if fewer than 5 issues remain for the last file, `nXX` must match that remainder
+- batch numbers must follow the ranked order of issues
+- batch `b01` must contain the 5 most relevant issues
+- batch `b02` must contain the next 5 most relevant issues
+- batch `b03` must contain the next 5 most relevant issues, and so on
+
+## Batching rule
+
+The total number of issues to return is controlled by `MAX_TOTAL_ISSUES` in the configuration block at the end of this prompt.
+
+You must:
+
+1. identify candidate issues
+2. keep only the best `MAX_TOTAL_ISSUES` issues
+3. sort them by relevance using the ranking rules above
+4. split them into as many JSON files as needed
+5. place at most 5 issues in each JSON file
+6. preserve ranked order across files
+
+Example:
+
+- if `MAX_TOTAL_ISSUES = 15`, return exactly 3 JSON files
+- file `b01` contains issues ranked 1 to 5
+- file `b02` contains issues ranked 6 to 10
+- file `b03` contains issues ranked 11 to 15
+
+If fewer than `MAX_TOTAL_ISSUES` valid issues are found, return only the valid issues found, still sorted and batched in files of at most 5.
+
+## Title convention
+
+Titles must be short, informative, and function-oriented.
+
+Preferred pattern:
+
+`function_name() <specific problem>`
+
+Examples:
+
+- `drop.gts() can return NULL when no dimension is dropped`
+- `read_osmose() references undefined output argument`
+- `.combine_models() should use inherits() for class checks`
+
+Avoid vague titles such as:
+
+- `Improve robustness`
+- `Fix bug in code`
+- `Refactor function`
+
+## Body template
+
+The body must make `kind`, `severity`, and `confidence` explicit near the top so humans can triage quickly.
+
+Use this exact structure:
+
+`Kind: <kind>`
+`Severity: <severity>`
+`Confidence: <confidence>`
+
+Blank line.
+
+`In \`FILE\`, \`FUNCTION()\` does X, which causes Y.`
+
+Blank line.
+
+`Proposed fix:`
+
+Then either:
+
+- a short bullet list, or
+- a short exact code snippet when the change is very clear
+
+Optionally add one final short sentence only if needed to clarify the failure mode.
+
+Keep the body concise.
+Do not add long “why this matters” sections.
+
+## Body examples
+
+Example 1:
+
+Kind: bug
+Severity: high
+Confidence: high
+
+In `R/gridded-reshape.R`, `drop.gts()` returns early for 3D objects and for singleton depth, but has no final `return(x)`. For 4D objects with non-singleton depth, it can fall through and return `NULL`.
+
+Proposed fix:
+
+```r
+if (length(ndim) == 3) return(x)
+if (ndim[3] == 1) {
+  dim(x$x) = ndim[-3]
+  x$depth = NULL
+}
+return(x)
+```
+
+Example 2:
+
+Kind: robustness
+Severity: medium
+Confidence: high
+
+In `R/jjmr-internal.R`, `.getOutFile()` uses `normalizePath()` with `mustWork = TRUE`, which can fail before a clearer missing-output error is issued upstream.
+
+Proposed fix:
+
+- use `normalizePath(..., mustWork = FALSE)`
+- add explicit `file.exists()` checks at the caller level
+- stop with targeted messages naming missing files
+
+## Additional rules
+
+- One issue per root cause.
+- Do not merge unrelated problems into one issue.
+- Avoid duplicate issues, including duplicates across helper or wrapper functions unless the same root cause truly affects both.
+- Prefer exact file and function names.
+- If multiple functions share the same underlying defect, report one issue only if a single fix would address them together.
+- Use `labels` conservatively. Usually include one label matching `kind`. Add a second label only if clearly justified.
+- Leave `assignees` as an empty array unless explicitly instructed otherwise.
+- Leave `milestone` as an empty string unless explicitly instructed otherwise.
+
+## Output format
+
+Return the result as one or more sections, one section per JSON file, in ranked batch order.
+
+For each file, use exactly this structure:
+
+FILE: <filename>.json
+```json
+[
+  ...issues for that file...
+]
+```
+
+Rules:
+
+- do not wrap all files inside another JSON object
+- do not add commentary before the first file
+- do not add commentary after the last file
+- do not add explanatory prose between files
+- each file section must contain only one standalone JSON array
+- output files in batch order: `b01`, then `b02`, then `b03`, etc.
+
+## Final instruction
+
+Inspect the attached R package source and return the ranked JSON file sections only.
+
+## Configuration
+
+MAX_TOTAL_ISSUES = 15
+

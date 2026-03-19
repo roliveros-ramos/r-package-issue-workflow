@@ -1,0 +1,19 @@
+[
+  {
+    "issue_id": "workflow-check-r-2026-03-19-b00-001",
+    "package": "workflow-check",
+    "scope": "R",
+    "kind": "validation",
+    "severity": "low",
+    "confidence": "high",
+    "title": "Workflow test issue: configuration completed successfully",
+    "body": "Kind: validation\nSeverity: low\nConfidence: high\n\nThis is a synthetic workflow-verification issue used to confirm that the JSON batch, GitHub CLI authentication, repository targeting, and issue-creation script are configured correctly.\n\nProposed fix:\n\n- no code change is required\n- close this issue after confirming that the workflow is running as expected\n\nThis issue should be created only as a one-off configuration test.\n",
+    "files": [
+      "<workflow-test>"
+    ],
+    "function": "<workflow-test>",
+    "labels": [],
+    "assignees": [],
+    "milestone": ""
+  }
+]
