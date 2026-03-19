@@ -26,9 +26,9 @@ Install GitHub CLI (detailed instructions in the last section) and authenticate 
 gh auth login
 ```
 
-Then follow the prompts to authenticate to GitHub. Browser-based login is usually the easiest route. GitHub’s quickstart documents `gh auth login` as the standard setup flow, and the `gh auth login` manual documents the token-based alternative. citeturn955958search0turn955958search1
+Then follow the prompts to authenticate to GitHub. Browser-based login is usually the easiest route. GitHub’s quickstart documents `gh auth login` as the standard setup flow, and the `gh auth login` manual documents the token-based alternative. 
 
-If browser-based login does not work in your environment, a classic Personal Access Token can be used with `--with-token`. The current `gh auth login` manual states that the minimum required scopes for that classic token are `repo`, `read:org`, and `gist`. citeturn955958search1turn955958search2
+If browser-based login does not work in your environment, a classic Personal Access Token can be used with `--with-token`. The current `gh auth login` manual states that the minimum required scopes for that classic token are `repo`, `read:org`, and `gist`. 
 
 A quick verification is:
 
